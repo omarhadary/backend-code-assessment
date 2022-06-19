@@ -14,8 +14,12 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 import SearchIcon from "@mui/icons-material/Search";
 
-async function getLoans(page: number = 0, pageSize: number = 10): Promise<any> {
-  const res = await fetch(`/api/loans?page=${page}&pageSize=${pageSize}`);
+async function getLoans(
+  page: number = 0,
+  pageSize: number = 10,
+  searchTerm: string
+): Promise<any> {
+  const res = await fetch(`/api/loans?page=${page}&pageSize=${pageSize}&searchTerm=${searchTerm}`);
   return res.json();
 }
 
@@ -36,11 +40,18 @@ const Home: NextPage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { isLoading, data } = useQuery(
+  const {
+    data,
+    refetch
+  } = useQuery(
     ["loans", page, pageSize],
-    () => getLoans(page, pageSize),
+    () => getLoans(page, pageSize, searchTerm),
     { keepPreviousData: true }
   );
+
+  const handleSearchTermChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
 
   const [rows, rowCount] = data ?? [[], 0];
 
@@ -51,21 +62,23 @@ const Home: NextPage = () => {
       </AppBar>
       <Container maxWidth="lg" sx={{ pt: 15 }}>
         <TextField
-          label="Search"
-          placeholder="search by address or company..."
-          sx={{ width: 350, marginBottom: 4 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
                 <SearchIcon />
               </InputAdornment>
-            ),
+            )
           }}
+          label="Search"
+          placeholder="search by address or company..."
+          sx={{ width: 350, marginBottom: 4 }}
+          onChange={handleSearchTermChange}
+          onKeyDown={(e) => { e.key === "Enter" ? refetch() : {} }}
+          value={searchTerm}
         />
         <DataGrid
           autoHeight
           columns={columns}
-          loading={isLoading}
           page={page}
           pageSize={pageSize}
           paginationMode="server"
@@ -73,7 +86,7 @@ const Home: NextPage = () => {
           onPageChange={(page) => setPage(page)}
           rows={rows}
           rowCount={Number(rowCount)}
-          rowsPerPageOptions={[10, 50, 100]}
+          rowsPerPageOptions={[5, 10, 25, 50, 100]}
         />
       </Container>
     </>
