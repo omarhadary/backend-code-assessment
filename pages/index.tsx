@@ -15,7 +15,7 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 
 async function getLoans(page: number = 0, pageSize: number = 10): Promise<any> {
-  const res = await fetch("/api/loans");
+  const res = await fetch(`/api/loans?page=${page}&pageSize=${pageSize}`);
   return res.json();
 }
 
@@ -36,9 +36,12 @@ const Home: NextPage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data } = useQuery(["loans", page, pageSize], () =>
-    getLoans(page, pageSize)
+  const { isLoading, data } = useQuery(
+    ["loans", page, pageSize],
+    () => getLoans(page, pageSize),
+    { keepPreviousData: true }
   );
+
   const [rows, rowCount] = data ?? [[], 0];
 
   return (
@@ -50,7 +53,7 @@ const Home: NextPage = () => {
         <TextField
           label="Search"
           placeholder="search by address or company..."
-          sx={{ width: 350, marginBottom: 4}}
+          sx={{ width: 350, marginBottom: 4 }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -60,14 +63,17 @@ const Home: NextPage = () => {
           }}
         />
         <DataGrid
-          rows={rows}
-          columns={columns}
           autoHeight
-          rowCount={rowCount}
+          columns={columns}
+          loading={isLoading}
           page={page}
           pageSize={pageSize}
+          paginationMode="server"
           onPageSizeChange={(pageSize) => setPageSize(pageSize)}
           onPageChange={(page) => setPage(page)}
+          rows={rows}
+          rowCount={Number(rowCount)}
+          rowsPerPageOptions={[10, 50, 100]}
         />
       </Container>
     </>
