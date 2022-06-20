@@ -53,7 +53,7 @@ const Home: NextPage = () => {
     setSearchTerm(event.target.value);
   };
 
-  const [rows, rowCount] = data ?? [[], 0];
+  const [rows, rowCount, totalLoanAmounts] = data ?? [[], 0, 0];
 
   return (
     <>
@@ -88,6 +88,9 @@ const Home: NextPage = () => {
           rowCount={Number(rowCount)}
           rowsPerPageOptions={[5, 10, 25, 50, 100]}
         />
+        <Box sx={{ p: 1, display: 'flex' }}>
+          Total Loan Amounts: {totalLoanAmounts}
+        </Box>
       </Container>
     </>
   );
