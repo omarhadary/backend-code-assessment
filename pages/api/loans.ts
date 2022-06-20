@@ -23,6 +23,7 @@ export default async function handler(
   try {
     await client.connect()
 
+    //Todo - look into using an ORM like Sequelize or executing stored procedures that return multiple datasets
     const rowCount = await client.query(`
       select
           count(*)
@@ -54,7 +55,32 @@ export default async function handler(
       offset ${offset}
       `)
 
-    res.status(200).json([camelcaseKeys(result.rows), rowCount.rows[0].count])
+    const totalLoanAmounts = await client.query(`
+      select 
+          sum(amount)
+      from (
+          select
+              t1.amount
+          from loan t1
+          left join address t2
+              on t1.address_id = t2.id
+          left join company t3
+              on t1.company_id = t3.id
+          ${searchClause}
+          order by 
+              t1.id asc
+          limit ${limit} 
+          offset ${offset}
+      ) total
+      `)
+
+    res.status(200).json(
+      [
+        camelcaseKeys(result.rows),
+        rowCount.rows[0].count,
+        totalLoanAmounts.rows[0].sum
+      ]
+    )
   } catch (err: any) {
     console.log(err)
     res.status(500).send(err.message)
